@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+
 /**
  * Wingdings is a trademark of Microsoft Corporation.
  * Copyright © 1990-1992 Microsoft Corporation. All rights reserved.
@@ -26,23 +27,33 @@ public class Main extends JFrame {
 
     public Main() {
         setTitle("Wingdings Translator");
-        setSize(500, 400);
+        setSize(500, 450);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+
         JPanel topPanel = new JPanel(new FlowLayout());
         modeBox = new JComboBox<>(new String[]{"Русский -> Wingdings", "Wingdings -> Русский"});
         JButton translateButton = new JButton("Перевести");
         topPanel.add(modeBox);
         topPanel.add(translateButton);
+
         inputArea = new JTextArea(7, 40);
         outputArea = new JTextArea(7, 40);
         outputArea.setEditable(false);
-        Font unicodeFont = new Font("Segoe UI Symbol", Font.PLAIN, 16);
+
+        inputArea.setLineWrap(true);
+        inputArea.setWrapStyleWord(true);
+        outputArea.setLineWrap(true);
+        outputArea.setWrapStyleWord(true);
+
+        Font unicodeFont = new Font("Arial Unicode MS", Font.PLAIN, 16);
         inputArea.setFont(unicodeFont);
         outputArea.setFont(unicodeFont);
+
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
         mainPanel.add(new JLabel("Введите текст:"));
         mainPanel.add(new JScrollPane(inputArea));
         mainPanel.add(Box.createVerticalStrut(10));
@@ -50,7 +61,9 @@ public class Main extends JFrame {
         mainPanel.add(Box.createVerticalStrut(10));
         mainPanel.add(new JLabel("Результат:"));
         mainPanel.add(new JScrollPane(outputArea));
+
         add(mainPanel);
+
         translateButton.addActionListener(e -> handleTranslation());
     }
 
@@ -88,11 +101,30 @@ public class Main extends JFrame {
             }
             i += Character.charCount(codePoint);
         }
+
         String latinStr = latinSb.toString();
-        for (Map.Entry<String, Character> entry : EN_TO_RU.entrySet()) {
-            latinStr = latinStr.replace(entry.getKey(), String.valueOf(entry.getValue()));
+        StringBuilder resultRu = new StringBuilder();
+        int j = 0;
+
+        while (j < latinStr.length()) {
+            boolean matched = false;
+            for (int len = 4; len >= 1; len--) {
+                if (j + len <= latinStr.length()) {
+                    String sub = latinStr.substring(j, j + len);
+                    if (EN_TO_RU.containsKey(sub)) {
+                        resultRu.append(EN_TO_RU.get(sub));
+                        j += len;
+                        matched = true;
+                        break;
+                    }
+                }
+            }
+            if (!matched) {
+                resultRu.append(latinStr.charAt(j));
+                j++;
+            }
         }
-        return latinStr;
+        return resultRu.toString();
     }
 
     private static void initializeWingdingsMaps() {
@@ -114,11 +146,11 @@ public class Main extends JFrame {
         Object[][] pairs = {
                 {'а', "a"}, {'б', "b"}, {'в', "v"}, {'г', "g"}, {'д', "d"},
                 {'е', "e"}, {'ё', "yo"}, {'ж', "zh"}, {'з', "z"}, {'и', "i"},
-                {'й', "y"}, {'к', "k"}, {'л', "l"}, {'м', "m"}, {'н', "n"},
+                {'й', "jj"}, {'к', "k"}, {'л', "l"}, {'м', "m"}, {'н', "n"},
                 {'о', "o"}, {'п', "p"}, {'р', "r"}, {'с', "s"}, {'т', "t"},
                 {'у', "u"}, {'ф', "f"}, {'х', "kh"}, {'ц', "ts"}, {'ч', "ch"},
-                {'ш', "sh"}, {'щ', "shch"}, {'ы', "y"}, {'э', "e"}, {'ю', "yu"},
-                {'я', "ya"}, {'ь', ""}, {'ъ', ""}
+                {'ш', "sh"}, {'щ', "shch"}, {'ы', "ih"}, {'э', "eh"}, {'ю', "yu"},
+                {'я', "ya"}, {'ь', "'"}, {'ъ', "\""}
         };
         for (Object[] pair : pairs) {
             RU_TO_EN.put((Character) pair[0], (String) pair[1]);
